@@ -1,0 +1,13 @@
+resources:
+  - ../base
+
+patches:
+- target:
+    kind: Deployment
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: quarkus-app-prd
+    - op: replace
+      path: /spec/replicas
+      value: 3
