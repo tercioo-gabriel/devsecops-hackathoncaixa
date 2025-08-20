@@ -9,3 +9,5 @@ EXPOSE 8080
 USER 1001
 
 ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
+
+# teste
