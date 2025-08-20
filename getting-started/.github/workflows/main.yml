@@ -1,10 +1,16 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches:
-      - des
-      - prd
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente para o deploy'
+        required: true
+        default: 'des'
+        type: choice
+        options:
+          - des
+          - prd
 
 jobs:
   build-and-deploy:
@@ -41,16 +47,15 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           cd getting-started
-          # A variável de ambiente GITHUB_REF contém a branch (ex: refs/heads/des)
-          # A gente extrai a branch e usa como tag.
-          BRANCH_NAME=${GITHUB_REF##*/}
-          IMAGE_TAG=${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${BRANCH_NAME}
+          # O nome do ambiente vem do input manual
+          ENVIRONMENT_NAME="${{ github.event.inputs.environment }}"
+          
+          IMAGE_TAG=${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${ENVIRONMENT_NAME}
           docker build --no-cache --tag $IMAGE_TAG .
           docker push $IMAGE_TAG
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
       
-      - name: Deploy to Minikube
-        if: github.ref == 'refs/heads/des' || github.ref == 'refs/heads/prd'
+      - name: Deploy no Minikube
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.MINIKUBE_IP }}
@@ -59,10 +64,11 @@ jobs:
           script: |
             # Acessa a pasta do projeto
             cd /home/tercioga/project/devsecops-hackathoncaixa
-            # Aplica os manifestos do Kustomize dependendo da branch
-            if [[ "${{ github.ref }}" == "refs/heads/des" ]]; then
-              kubectl apply -k kubernetes/des
-            elif [[ "${{ github.ref }}" == "refs/heads/prd" ]]; then
-              kubectl apply -k kubernetes/prd
-            fi
-            # O kubectl irá buscar a imagem no Docker Hub automaticamente.
+            # O nome do ambiente vem do input manual
+            ENVIRONMENT_NAME="${{ github.event.inputs.environment }}"
+
+            # Atualiza o manifesto do Kustomize para usar a tag correta
+            sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${ENVIRONMENT_NAME}|" kubernetes/base/deployment.yaml
+
+            # Aplica os manifestos do Kustomize dependendo do ambiente
+            kubectl apply -k kubernetes/$ENVIRONMENT_NAME
