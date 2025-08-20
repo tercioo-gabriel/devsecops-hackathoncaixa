@@ -1,16 +1,11 @@
-# Etapa 1: constrói o projeto
-FROM maven:3.8.7-openjdk-17 AS build
-WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
-
-# Etapa 2: imagem final com o JAR gerado
-FROM eclipse-temurin:17-jre
-WORKDIR /app
-COPY --from=build /app/target/quarkus-app/lib/ /app/lib/
-COPY --from=build /app/target/quarkus-app/*.jar /app/
-COPY --from=build /app/target/quarkus-app/app/ /app/app/
-COPY --from=build /app/target/quarkus-app/quarkus/ /app/quarkus/
+FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+COPY --chown=1001:root --chmod=0755 target/*-runner /work/application
 
 EXPOSE 8080
-CMD ["java", "-jar", "quarkus-run.jar"]
+USER 1001
+
+ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
