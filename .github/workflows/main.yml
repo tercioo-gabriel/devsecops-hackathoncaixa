@@ -20,31 +20,31 @@ jobs:
       packages: write
     
     steps:
-      - name: Checkout Repository
+      - name: Clone do repositório
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17
+      - name: Configuração JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build Native Executable with Maven
+      - name: Build Native executável com Maven
         run: |
           cd getting-started
           ./mvnw clean package -Pnative
 
-      - name: Set up Docker Buildx
+      - name: Configuração Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Log in to Docker Hub
+      - name: Login no DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      - name: Build and Push Docker Image
+      - name: Build e Push da imagem Docker
         run: |
           cd getting-started
           # O nome do ambiente vem do input manual
@@ -62,13 +62,8 @@ jobs:
           username: ${{ secrets.MINIKUBE_USERNAME }}
           key: ${{ secrets.MINIKUBE_SSH_KEY }}
           script: |
-            # Acessa a pasta do projeto
             cd /home/tercioga/project/devsecops-hackathoncaixa
-            # O nome do ambiente vem do input manual
             ENVIRONMENT_NAME="${{ github.event.inputs.environment }}"
-
-            # Atualiza o manifesto do Kustomize para usar a tag correta
             sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${ENVIRONMENT_NAME}|" kubernetes/base/deployment.yaml
 
-            # Aplica os manifestos do Kustomize dependendo do ambiente
             kubectl apply -k kubernetes/$ENVIRONMENT_NAME
