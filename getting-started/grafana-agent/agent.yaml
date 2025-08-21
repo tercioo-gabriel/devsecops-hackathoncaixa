@@ -10,7 +10,7 @@ metrics:
           metrics_path: /q/metrics
 
       remote_write:
-        - url: 
+        - url: ${{ secrets.URL_GRAFANA }}
           basic_auth:
-            username: 
-            password: 
+            username: ${{ secrets.USERNAME_GRAFANA }}
+            password: ${{ secrets.TOKEN_GRAFANA }}
