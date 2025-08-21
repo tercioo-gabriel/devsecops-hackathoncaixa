@@ -18,3 +18,11 @@ primary_region = 'gru'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+
+[[services]]
+  internal_port = 12345
+  processes = ["agent"]

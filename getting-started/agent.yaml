@@ -1,0 +1,16 @@
+metrics:
+  global:
+    scrape_interval: 15s
+  configs:
+    - name: quarkus-app
+      scrape_configs:
+        - job_name: 'quarkus'
+          static_configs:
+            - targets: ['localhost:8080']
+          metrics_path: /q/metrics
+
+      remote_write:
+        - url: ${URL_GRAFANA}
+          basic_auth:
+            username: ${USERNAME_GRAFANA}
+            password: ${TOKEN_GRAFANA}
