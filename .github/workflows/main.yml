@@ -55,15 +55,22 @@ jobs:
           docker push $IMAGE_TAG
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
       
-      - name: Deploy no Minikube
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.MINIKUBE_IP }}
-          username: ${{ secrets.MINIKUBE_USERNAME }}
-          key: ${{ secrets.MINIKUBE_SSH_KEY }}
-          script: |
-            cd /home/tercioga/project/devsecops-hackathoncaixa
-            ENVIRONMENT_NAME="${{ github.event.inputs.environment }}"
-            sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${ENVIRONMENT_NAME}|" kubernetes/base/deployment.yaml
+      - name: Configurar Kubectl
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
 
-            kubectl apply -k kubernetes/$ENVIRONMENT_NAME
+      - name: Configurar Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker --kubernetes-version=v1.29.0
+          kubectl config use-context minikube
+
+      - name: Deploy no Minikube
+        run: |
+          cd kubernetes
+          ENVIRONMENT_NAME="${{ github.event.inputs.environment }}"
+          sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${ENVIRONMENT_NAME}|" base/deployment.yaml
+          kubectl apply -k $ENVIRONMENT_NAME
