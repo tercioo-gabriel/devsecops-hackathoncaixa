@@ -77,6 +77,13 @@ jobs:
           sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/quarkus-native:1.0-${ENVIRONMENT_NAME}|" base/deployment.yaml
           kubectl apply -k $ENVIRONMENT_NAME
 
+      - name: Scan de vulnerabilidades com Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_TAG }}
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
       - name: Instalar Fly CLI
         if: ${{ github.event.inputs.environment == 'prd' }}
         run: |
