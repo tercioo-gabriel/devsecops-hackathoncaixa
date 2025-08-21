@@ -1,0 +1,15 @@
+services:
+  quarkus-app:
+    build: .
+    ports:
+      - "8080:8080"
+    container_name: quarkus-app
+
+  grafana-agent:
+    image: grafana/agent:v0.44.2
+    container_name: grafana-agent
+    volumes:
+      - ./agent.yaml:/etc/agent.yaml
+    command: -config.file=/etc/agent.yaml
+    depends_on:
+      - quarkus-app
