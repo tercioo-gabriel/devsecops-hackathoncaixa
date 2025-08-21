@@ -23,6 +23,5 @@ primary_region = 'gru'
   internal_port = 8080
   processes = ["app"]
 
-[[services]]
-  internal_port = 12345
-  processes = ["agent"]
+[processes]
+  app = "/work/application -Dquarkus.http.host=0.0.0.0"
