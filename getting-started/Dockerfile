@@ -1,5 +1,9 @@
 FROM eclipse-temurin:17-ubi10-minimal
 WORKDIR /work/
+
+USER root
+RUN microdnf install -y shadow-utils coreutils
+
 RUN chown 1001 /work \
     && chmod "g+rwX" /work \
     && chown 1001:root /work
